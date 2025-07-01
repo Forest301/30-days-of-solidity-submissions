@@ -1,4 +1,3 @@
-  
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
@@ -6,15 +5,12 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol"; // For SafeCast if needed
 
-// Interface for fetching ERC-20 metadata (decimals)
 interface IERC20Metadata is IERC20 {
     function decimals() external view returns (uint8);
     function name() external view returns (string memory);
     function symbol() external view returns (string memory);
 }
 
-/// @title Yield Farming Platform
-///     Stake tokens to earn rewards over time with optional emergency withdrawal and admin refill
 contract YieldFarming is ReentrancyGuard {
     using SafeCast for uint256;
 
@@ -56,7 +52,6 @@ contract YieldFarming is ReentrancyGuard {
         rewardRatePerSecond = _rewardRatePerSecond;
         owner = msg.sender;
 
-        // Try fetching decimals
         try IERC20Metadata(_stakingToken).decimals() returns (uint8 decimals) {
             stakingTokenDecimals = decimals;
         } catch (bytes memory) {
@@ -64,7 +59,6 @@ contract YieldFarming is ReentrancyGuard {
         }
     }
 
-    ///     Stake tokens to start earning rewards
     function stake(uint256 amount) external nonReentrant {
         require(amount > 0, "Cannot stake 0");
 
@@ -76,7 +70,6 @@ contract YieldFarming is ReentrancyGuard {
         emit Staked(msg.sender, amount);
     }
 
-    ///     Unstake tokens and optionally claim rewards
     function unstake(uint256 amount) external nonReentrant {
         require(amount > 0, "Cannot unstake 0");
         require(stakers[msg.sender].stakedAmount >= amount, "Not enough staked");
@@ -89,7 +82,6 @@ contract YieldFarming is ReentrancyGuard {
         emit Unstaked(msg.sender, amount);
     }
 
-    ///     Claim accumulated rewards
     function claimRewards() external nonReentrant {
         updateRewards(msg.sender);
 
@@ -103,7 +95,6 @@ contract YieldFarming is ReentrancyGuard {
         emit RewardClaimed(msg.sender, reward);
     }
 
-    ///     Emergency unstake without claiming rewards
     function emergencyWithdraw() external nonReentrant {
         uint256 amount = stakers[msg.sender].stakedAmount;
         require(amount > 0, "Nothing staked");
@@ -117,14 +108,12 @@ contract YieldFarming is ReentrancyGuard {
         emit EmergencyWithdraw(msg.sender, amount);
     }
 
-    ///     Admin can refill reward tokens
     function refillRewards(uint256 amount) external onlyOwner {
         rewardToken.transferFrom(msg.sender, address(this), amount);
 
         emit RewardRefilled(msg.sender, amount);
     }
 
-    ///     Update rewards for a staker
     function updateRewards(address user) internal {
         StakerInfo storage staker = stakers[user];
 
@@ -138,7 +127,6 @@ contract YieldFarming is ReentrancyGuard {
         staker.lastUpdate = block.timestamp;
     }
 
-    ///     View pending rewards without claiming
     function pendingRewards(address user) external view returns (uint256) {
         StakerInfo memory staker = stakers[user];
 
@@ -153,7 +141,6 @@ contract YieldFarming is ReentrancyGuard {
         return pendingReward;
     }
 
-    ///     View staking token decimals
     function getStakingTokenDecimals() external view returns (uint8) {
         return stakingTokenDecimals;
     }
